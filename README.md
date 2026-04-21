@@ -20,11 +20,18 @@ The bot supports multiple interaction modes per chat:
 
 ## Commands
 - `/start`
+- `/menu`
 - `/ask <question>`
 - `/summarize <text>`
 - `/mode <default|operator|human_ai|haai>`
 - `/human <message>`
 - `/haai <topic or question>`
+
+## Simple menu
+The bot includes a simple Telegram reply-keyboard menu for:
+- switching modes
+- tapping sample prompts
+- quick re-entry into the main interaction flow
 
 ## Why the HAII mode matters
 The `haai` mode is designed for reflective, rigorous dialogue about Human–AI Interaction.
@@ -34,6 +41,13 @@ It is useful for:
 - conceptual clarification
 - human–AI collaboration design
 - critique of interaction patterns and system assumptions
+
+When appropriate, HAII responses are structured around:
+- Concept
+- Key Tension
+- Ethical Risk
+- Pedagogical Angle
+- Discussion Questions
 
 ## Stack
 - Python

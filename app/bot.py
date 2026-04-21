@@ -1,5 +1,5 @@
 import os
-from telegram import Update
+from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from llm import complete
 from storage import append_log, get_mode, set_mode
@@ -21,9 +21,19 @@ SYSTEM_PROMPTS = {
         "Your role is to help explore, critique, and design human-AI systems through reflective dialogue. "
         "Support ethical reasoning, pedagogical clarity, conceptual analysis, and system design. "
         "Do not just answer quickly: clarify assumptions, surface trade-offs, define terms, compare models, and ask good follow-up questions when useful. "
+        "When appropriate, structure your answer with these sections: Concept, Key Tension, Ethical Risk, Pedagogical Angle, Discussion Questions. "
         "Be intellectually honest, structured, and grounded. Avoid hype. Make the discussion rigorous but readable."
     ),
 }
+
+MENU_KEYBOARD = ReplyKeyboardMarkup(
+    [
+        ["/mode default", "/mode operator"],
+        ["/mode human_ai", "/mode haai"],
+        ["/human help me think this through", "/haai What is human-AI interaction?"],
+    ],
+    resize_keyboard=True,
+)
 
 
 def current_system(chat_id: int) -> str:
@@ -39,7 +49,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/summarize <text>\n"
         "/mode <default|operator|human_ai|haai>\n"
         "/human <message>\n"
-        "/haai <topic or question>"
+        "/haai <topic or question>\n"
+        "/menu",
+        reply_markup=MENU_KEYBOARD,
+    )
+
+
+async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "Menu enabled. You can tap a mode or a sample command below.",
+        reply_markup=MENU_KEYBOARD,
     )
 
 
@@ -47,24 +66,24 @@ async def mode_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     if not context.args:
         mode = get_mode(chat_id)
-        await update.message.reply_text(f"Current mode: {mode}")
+        await update.message.reply_text(f"Current mode: {mode}", reply_markup=MENU_KEYBOARD)
         return
 
     mode = context.args[0].strip().lower()
     if mode not in SYSTEM_PROMPTS:
-        await update.message.reply_text("Available modes: default, operator, human_ai, haai")
+        await update.message.reply_text("Available modes: default, operator, human_ai, haai", reply_markup=MENU_KEYBOARD)
         return
 
     set_mode(chat_id, mode)
     append_log({"event": "mode", "chat_id": chat_id, "mode": mode})
-    await update.message.reply_text(f"Mode set to: {mode}")
+    await update.message.reply_text(f"Mode set to: {mode}", reply_markup=MENU_KEYBOARD)
 
 
 async def ask(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     text = " ".join(context.args).strip()
     if not text:
-        await update.message.reply_text("Usage: /ask <question>")
+        await update.message.reply_text("Usage: /ask <question>", reply_markup=MENU_KEYBOARD)
         return
 
     answer = await complete(text, system=current_system(chat_id))
@@ -75,14 +94,14 @@ async def ask(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "input": text,
         "output": answer,
     })
-    await update.message.reply_text(answer[:4000])
+    await update.message.reply_text(answer[:4000], reply_markup=MENU_KEYBOARD)
 
 
 async def human(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     text = " ".join(context.args).strip()
     if not text:
-        await update.message.reply_text("Usage: /human <message>")
+        await update.message.reply_text("Usage: /human <message>", reply_markup=MENU_KEYBOARD)
         return
 
     answer = await complete(text, system=SYSTEM_PROMPTS["human_ai"])
@@ -92,14 +111,14 @@ async def human(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "input": text,
         "output": answer,
     })
-    await update.message.reply_text(answer[:4000])
+    await update.message.reply_text(answer[:4000], reply_markup=MENU_KEYBOARD)
 
 
 async def haai(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     text = " ".join(context.args).strip()
     if not text:
-        await update.message.reply_text("Usage: /haai <topic or question>")
+        await update.message.reply_text("Usage: /haai <topic or question>", reply_markup=MENU_KEYBOARD)
         return
 
     answer = await complete(text, system=SYSTEM_PROMPTS["haai"])
@@ -109,13 +128,13 @@ async def haai(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "input": text,
         "output": answer,
     })
-    await update.message.reply_text(answer[:4000])
+    await update.message.reply_text(answer[:4000], reply_markup=MENU_KEYBOARD)
 
 
 async def summarize(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = " ".join(context.args).strip()
     if not text:
-        await update.message.reply_text("Usage: /summarize <text>")
+        await update.message.reply_text("Usage: /summarize <text>", reply_markup=MENU_KEYBOARD)
         return
 
     prompt = f"Summarize the following text in 3-5 bullet points:\n\n{text}"
@@ -126,11 +145,12 @@ async def summarize(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "input": text,
         "output": answer,
     })
-    await update.message.reply_text(answer[:4000])
+    await update.message.reply_text(answer[:4000], reply_markup=MENU_KEYBOARD)
 
 
 app = ApplicationBuilder().token(TOKEN).build()
 app.add_handler(CommandHandler("start", start))
+app.add_handler(CommandHandler("menu", menu))
 app.add_handler(CommandHandler("mode", mode_cmd))
 app.add_handler(CommandHandler("ask", ask))
 app.add_handler(CommandHandler("human", human))
