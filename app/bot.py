@@ -1,6 +1,6 @@
 import os
 from telegram import Update, ReplyKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 from config import load_dotenv
 from llm import complete
 from storage import append_log, get_mode, set_mode
@@ -39,8 +39,12 @@ MENU_KEYBOARD = ReplyKeyboardMarkup(
 )
 
 
+def current_mode(chat_id: int) -> str:
+    return get_mode(chat_id)
+
+
 def current_system(chat_id: int) -> str:
-    mode = get_mode(chat_id)
+    mode = current_mode(chat_id)
     return SYSTEM_PROMPTS.get(mode, SYSTEM_PROMPTS["default"])
 
 
@@ -53,7 +57,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/mode <default|operator|human_ai|haai>\n"
         "/human <message>\n"
         "/haai <topic or question>\n"
-        "/menu",
+        "/menu\n\n"
+        "You can also just type a normal message — the bot will answer in the current mode.",
         reply_markup=MENU_KEYBOARD,
     )
 
@@ -68,7 +73,7 @@ async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def mode_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     if not context.args:
-        mode = get_mode(chat_id)
+        mode = current_mode(chat_id)
         await update.message.reply_text(f"Current mode: {mode}", reply_markup=MENU_KEYBOARD)
         return
 
@@ -93,7 +98,7 @@ async def ask(update: Update, context: ContextTypes.DEFAULT_TYPE):
     append_log({
         "event": "ask",
         "chat_id": chat_id,
-        "mode": get_mode(chat_id),
+        "mode": current_mode(chat_id),
         "input": text,
         "output": answer,
     })
@@ -151,6 +156,25 @@ async def summarize(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(answer[:4000], reply_markup=MENU_KEYBOARD)
 
 
+async def plain_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    text = (update.message.text or "").strip()
+    if not text:
+        return
+
+    mode = current_mode(chat_id)
+    system = current_system(chat_id)
+    answer = await complete(text, system=system)
+    append_log({
+        "event": "plain_text",
+        "chat_id": chat_id,
+        "mode": mode,
+        "input": text,
+        "output": answer,
+    })
+    await update.message.reply_text(answer[:4000], reply_markup=MENU_KEYBOARD)
+
+
 app = ApplicationBuilder().token(TOKEN).build()
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("menu", menu))
@@ -159,6 +183,7 @@ app.add_handler(CommandHandler("ask", ask))
 app.add_handler(CommandHandler("human", human))
 app.add_handler(CommandHandler("haai", haai))
 app.add_handler(CommandHandler("summarize", summarize))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, plain_text))
 
 if __name__ == "__main__":
     app.run_polling()
