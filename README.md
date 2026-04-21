@@ -1,20 +1,61 @@
 # telegram-ai-operator
 
-Lightweight Telegram bot for AI-assisted workflows and automation.
+Lightweight Telegram bot for AI-assisted workflows, practical support, and Human–AI Interaction exploration.
 
-## Features
-- `/ask` — ask AI
-- `/summarize` — summarize text
-- `/task` — structured task execution
-- lightweight interaction logging
+## What it does
+This project provides a clean Telegram surface for:
+- quick AI-assisted questions
+- text summarization
+- operator-style structured responses
+- warm practical support conversations
+- academic-level Human–AI Interaction (HAII) dialogue
+
+## Modes
+The bot supports multiple interaction modes per chat:
+
+- `default` — clear, concise general assistance
+- `operator` — practical, execution-oriented responses
+- `human_ai` — warm, grounded, useful human-facing support
+- `haai` — academic-level Human–AI Interaction discussion mode
+
+## Commands
+- `/start`
+- `/ask <question>`
+- `/summarize <text>`
+- `/mode <default|operator|human_ai|haai>`
+- `/human <message>`
+- `/haai <topic or question>`
+
+## Why the HAII mode matters
+The `haai` mode is designed for reflective, rigorous dialogue about Human–AI Interaction.
+It is useful for:
+- ethics of AI
+- pedagogical framing
+- conceptual clarification
+- human–AI collaboration design
+- critique of interaction patterns and system assumptions
 
 ## Stack
 - Python
-- Telegram Bot API
-- OpenAI-compatible LLM adapter
+- python-telegram-bot
+- httpx
+- OpenAI-compatible API interface
+- Gemini 2.5 Flash by default
 
-## Goal
-Build a clean operator-facing Telegram surface for AI workflows.
+## Default model setup
+The bot is configured by default to use Gemini through Google's OpenAI-compatible endpoint.
+
+Environment variables:
+- `BOT_TOKEN`
+- `OPENAI_API_KEY`
+- `OPENAI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai`
+- `OPENAI_MODEL=gemini-2.5-flash`
+- `LOG_PATH=data/logs.jsonl`
+- `MODE_PATH=data/chat_modes.json`
+
+## Logging
+- interaction logs are stored in JSONL
+- per-chat selected mode is persisted in JSON
 
 ## Status
-In development
+Working prototype / early operator bot

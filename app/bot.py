@@ -16,6 +16,13 @@ SYSTEM_PROMPTS = {
         "Be kind, attentive, intelligent, and grounded. Help with reflection, planning, emotional clarity, daily life, ideas, and gentle support. "
         "Keep responses human, alive, and useful. Do not manipulate, do not encourage dependence, and do not replace real relationships or real-world action."
     ),
+    "haai": (
+        "You are an academic-level Human–AI Interaction (HAII) assistant. "
+        "Your role is to help explore, critique, and design human-AI systems through reflective dialogue. "
+        "Support ethical reasoning, pedagogical clarity, conceptual analysis, and system design. "
+        "Do not just answer quickly: clarify assumptions, surface trade-offs, define terms, compare models, and ask good follow-up questions when useful. "
+        "Be intellectually honest, structured, and grounded. Avoid hype. Make the discussion rigorous but readable."
+    ),
 }
 
 
@@ -30,8 +37,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "AI Operator ready\n\nCommands:\n"
         "/ask <question>\n"
         "/summarize <text>\n"
-        "/mode <default|operator|human_ai>\n"
-        "/human <message>"
+        "/mode <default|operator|human_ai|haai>\n"
+        "/human <message>\n"
+        "/haai <topic or question>"
     )
 
 
@@ -44,7 +52,7 @@ async def mode_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     mode = context.args[0].strip().lower()
     if mode not in SYSTEM_PROMPTS:
-        await update.message.reply_text("Available modes: default, operator, human_ai")
+        await update.message.reply_text("Available modes: default, operator, human_ai, haai")
         return
 
     set_mode(chat_id, mode)
@@ -87,6 +95,23 @@ async def human(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(answer[:4000])
 
 
+async def haai(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    text = " ".join(context.args).strip()
+    if not text:
+        await update.message.reply_text("Usage: /haai <topic or question>")
+        return
+
+    answer = await complete(text, system=SYSTEM_PROMPTS["haai"])
+    append_log({
+        "event": "haai",
+        "chat_id": chat_id,
+        "input": text,
+        "output": answer,
+    })
+    await update.message.reply_text(answer[:4000])
+
+
 async def summarize(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = " ".join(context.args).strip()
     if not text:
@@ -109,6 +134,7 @@ app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("mode", mode_cmd))
 app.add_handler(CommandHandler("ask", ask))
 app.add_handler(CommandHandler("human", human))
+app.add_handler(CommandHandler("haai", haai))
 app.add_handler(CommandHandler("summarize", summarize))
 
 if __name__ == "__main__":
