@@ -2,8 +2,11 @@ import os
 import httpx
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+OPENAI_BASE_URL = os.getenv(
+    "OPENAI_BASE_URL",
+    "https://generativelanguage.googleapis.com/v1beta/openai",
+)
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gemini-2.5-flash")
 
 
 async def complete(prompt: str, system: str = "You are a concise AI assistant.") -> str:
@@ -21,7 +24,7 @@ async def complete(prompt: str, system: str = "You are a concise AI assistant.")
             {"role": "system", "content": system},
             {"role": "user", "content": prompt},
         ],
-        "temperature": 0.2,
+        "temperature": 0.4,
     }
 
     async with httpx.AsyncClient(timeout=60) as client:
