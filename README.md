@@ -59,7 +59,7 @@ When appropriate, HAII responses are structured around:
 ## Default model setup
 The bot is configured by default to use Gemini through Google's OpenAI-compatible endpoint.
 
-Environment variables:
+Environment variables (the bot can load them automatically from a local `.env` file):
 - `BOT_TOKEN`
 - `OPENAI_API_KEY`
 - `OPENAI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai`
@@ -73,3 +73,13 @@ Environment variables:
 
 ## Status
 Working prototype / early operator bot
+
+## Quick start
+1. Create a `.env` file in the project root.
+2. Add your Telegram bot token and Gemini API key.
+3. Run:
+
+```bash
+source venv/bin/activate
+python app/bot.py
+```

@@ -1,8 +1,11 @@
 import os
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from config import load_dotenv
 from llm import complete
 from storage import append_log, get_mode, set_mode
+
+load_dotenv()
 
 TOKEN = os.getenv("BOT_TOKEN")
 if not TOKEN:
