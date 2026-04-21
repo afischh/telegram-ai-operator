@@ -1,14 +1,22 @@
 [Unit]
 Description=telegram-ai-operator
-After=network.target
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=20
 
 [Service]
 Type=simple
 User=alex
 WorkingDirectory=/srv/repos/telegram-ai-operator
+EnvironmentFile=/srv/repos/telegram-ai-operator/.env
 ExecStart=/srv/repos/telegram-ai-operator/run.sh
 Restart=always
 RestartSec=5
+TimeoutStartSec=60
+TimeoutStopSec=20
+StandardOutput=append:/srv/repos/telegram-ai-operator/logs/service.out.log
+StandardError=append:/srv/repos/telegram-ai-operator/logs/service.err.log
 
 [Install]
 WantedBy=multi-user.target
